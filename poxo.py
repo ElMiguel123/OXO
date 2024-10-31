@@ -6,7 +6,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
 import random
 
-class myOxo(App):
+class myOxo(App): 
     def build(self):
         Window.size = (300, 400)  # Ajuste la taille de la fenêtre pour le PC
         self.mode = None  # Mode de jeu choisi (1 joueur ou 2 joueurs)
