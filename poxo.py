@@ -40,7 +40,7 @@ class myOxo(App):
         layout.add_widget(btn_quit)
         
         # Ligne de crédit
-        credit_label = Label(text="(c) Wolfiz UniKorn Software - Release 0.1 - 2024", font_size=16, size_hint=(1, 0.2))
+        credit_label = Label(text="(c) Doll House Software- Release 0.1 - 2024", font_size=16, size_hint=(1, 0.2))
         layout.add_widget(credit_label)
         
         return layout
