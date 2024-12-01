@@ -18,6 +18,10 @@ LabelBase.register(name="8bit", fn_regular="8bit.ttf")
 class MainMenu(Screen):
     def __init__(self, **kwargs):
         super(MainMenu, self).__init__(**kwargs)
+        
+        self.difficulty_levels = ["Facile", "Moyenne", "Difficile", "Impossible"]
+        self.current_difficulty_index = 0
+        self.current_difficulty = self.difficulty_levels[self.current_difficulty_index]
 
         # Configuration de la couleur de fond du menu principal
         with self.canvas.before:
@@ -50,6 +54,17 @@ class MainMenu(Screen):
         self.ordre_chaos_button.bind(on_release=self.toggle_ordre_chaos)
         layout.add_widget(self.ordre_chaos_button)
 
+        # Add a button for "Difficulté"
+        self.difficulty_button = Button(
+            text="Difficulté : [b]Facile[/b]",
+            markup=True,
+            size_hint=(1, 0.2),
+            background_color=(1, 0.5, 0, 1)  # Orange color
+        )
+        self.difficulty_button.bind(on_release=self.change_difficulty)
+        layout.add_widget(self.difficulty_button)
+
+
         # Bouton pour afficher les instructions
         instructions_button = Button(text="Instructions", size_hint=(1, 0.2), background_color=(0.3, 0.3, 0.9, 1), color=(1, 1, 1, 1))
         instructions_button.bind(on_release=self.show_instructions)
@@ -62,8 +77,8 @@ class MainMenu(Screen):
 
         # Message défilant en bas de l'écran
         self.marquee_text = Label(
-            text=("(c) ByteRoots Studio - 2024 - release 0.1 - ce jeu est gratuit et ne contient pas de pub - "
-                  "Des améliorations suivront au fur et à mesure de mon propre apprentissage - belle journée à vous tous ..."),
+            text=("(c) ByteRoots Studio - 2024 - release 1.0 - cette application est gratuite et dépourvue de publicitée - "
+                  "Des améliorations suivront au fur et à mesure de mon propre apprentissage :) - belle journée à vous tous ..."),
             font_size='14sp', font_name="8bit", halign='left', size_hint_y=None, height='30sp', color=(0, 1, 0, 1)
         )
         marquee_container = BoxLayout(size_hint_y=None, height='30sp')
@@ -81,6 +96,11 @@ class MainMenu(Screen):
         # Taille de la matrice par défaut : 3x3
         self.matrix_size = 3
 
+    def change_difficulty(self, instance):
+        self.current_difficulty_index = (self.current_difficulty_index + 1) % len(self.difficulty_levels)
+        self.current_difficulty = self.difficulty_levels[self.current_difficulty_index]
+        self.difficulty_button.text = f"Difficulté : [b]{self.current_difficulty}[/b]"
+       
     def update_rect(self, *args):
         # Mettre à jour la taille et position du fond
         self.rect.size = self.size
@@ -88,8 +108,12 @@ class MainMenu(Screen):
 
     def start_game_vs_cpu(self, instance):
         # Passer à l'écran de jeu vs CPU avec la taille de matrice sélectionnée
+        print(f"On met la valeur difficulté à {self.difficulty_levels[self.current_difficulty_index]}")
+        #GameScreen.set_difficulty(GameScreen, self.difficulty_levels[self.current_difficulty_index])
         self.manager.current = 'game_vs_cpu'
+        self.manager.get_screen('game_vs_cpu').set_difficulty(self.difficulty_levels[self.current_difficulty_index])
         self.manager.get_screen('game_vs_cpu').set_grid_size(self.matrix_size)
+
 
     def start_two_player_game(self, instance):
         # Passer à l'écran de jeu pour deux joueurs avec la taille de matrice sélectionnée
@@ -129,6 +153,9 @@ class MainMenu(Screen):
 class GameScreen(Screen):
     def __init__(self, **kwargs):
         super(GameScreen, self).__init__(**kwargs)
+        print("hello")
+        self.cpu_difficulty = "Facile"  # Default value
+        print(f"Valeur initiale {self.cpu_difficulty}")
 
         with self.canvas.before:
             Color(0.2, 0.2, 0.2, 1)
@@ -154,6 +181,146 @@ class GameScreen(Screen):
 
         self.add_widget(layout)
 
+    def cpu_move(self):
+        
+        #button.color = (0, 1, 0, 1)
+        
+        print(f"Valeur actuelle {self.cpu_difficulty}")
+        
+        if self.cpu_difficulty == "Facile":
+            return self.random_ai()
+        elif self.cpu_difficulty == "Moyenne":
+            return self.medium_move()
+        elif self.cpu_difficulty == "Difficile":
+            return self.hard_move()
+        elif self.cpu_difficulty == "Impossible":
+            return self.impossible_move()
+        
+    
+    # Define the logic for different levels of CPU intelligence
+    
+    def ai_move(self):
+        for row in self.buttons:
+            for button in row:
+                if button.text == '':
+                    button.text = 'O'
+                    button.color = (0, 1, 0, 1)
+                    return
+                
+    def random_ai(self):
+        # IA facile : mouvement aléatoire
+        available_moves = [(row, col) for row in range(len(self.buttons)) for col in range(len(self.buttons)) if self.buttons[row][col].text == ""]
+        if available_moves:
+            row, col = random.choice(available_moves)
+            self.buttons[row][col].color=(0,1,0,1)
+            self.buttons[row][col].text = "O"
+
+
+    def medium_move(self):
+        """
+        IA défensive : bloque les tentatives de victoire de l'utilisateur.
+        """
+        # Vérifie si l'utilisateur peut gagner, et bloque
+        if self.block_user():
+            return
+        # Sinon, joue aléatoirement
+        else:
+            self.random_ai()
+
+    def hard_move(self):
+        """
+        IA offensive : cherche à gagner en priorité.
+        """
+        # Si elle peut gagner, elle le fait
+        if self.make_win():
+            return
+        # Sinon, bloque l'utilisateur
+        if self.block_user():
+            return
+        # Sinon, joue aléatoirement
+        else:
+            self.random_ai()
+
+    def impossible_move(self):
+        """
+        IA optimale : joue parfaitement en combinant attaque et défense.
+        """
+        # Si elle peut gagner, elle le fait
+        if self.make_win():
+            return
+        # Sinon, bloque l'utilisateur
+        if self.block_user():
+            return
+        # Si aucun danger ou opportunité, joue le centre (grille 3x3 uniquement)
+        center = len(self.buttons) // 2
+        if self.buttons[center][center].text == '':
+            self.buttons[center][center].text = 'O'
+            self.buttons[center][center].color = (0, 1, 0, 1)
+            return
+        # Sinon, joue aléatoirement
+        else:
+            self.random_ai()
+        
+    def make_win(self):
+        """
+        Vérifie si l'IA peut gagner et joue le coup gagnant.
+        Retourne True si un coup gagnant a été effectué.
+        """
+        for row in range(len(self.buttons)):
+            for col in range(len(self.buttons)):
+                if self.buttons[row][col].text == '':
+                    self.buttons[row][col].text = 'O'
+                    if self.check_winner_temp('O'):
+                        self.buttons[row][col].color = (0, 1, 0, 1)
+                        return True
+                    self.buttons[row][col].text = ''
+        return False
+
+    def check_winner_temp(self, symbol):
+        """
+        Vérifie temporairement si une combinaison gagnante existe pour un symbole donné.
+        Utile pour `block_user` et `make_win`.
+        """
+        win_condition = 3
+        size = len(self.buttons)
+
+        # Vérification des lignes et colonnes
+        for row in range(size):
+            for col in range(size - win_condition + 1):
+                if all(self.buttons[row][col + i].text == symbol for i in range(win_condition)):
+                    return True
+                if all(self.buttons[col + i][row].text == symbol for i in range(win_condition)):
+                    return True
+
+        # Vérification des diagonales
+        for row in range(size - win_condition + 1):
+            for col in range(size - win_condition + 1):
+                if all(self.buttons[row + i][col + i].text == symbol for i in range(win_condition)):
+                    return True
+                if all(self.buttons[row + i][col + win_condition - 1 - i].text == symbol for i in range(win_condition)):
+                    return True
+
+        return False
+        
+    def block_user(self):
+        # Bloquer le joueur si nécessaire (simple implémentation)
+        for row in range(len(self.buttons)):
+            for col in range(len(self.buttons)):
+                if self.buttons[row][col].text == "":
+                    self.buttons[row][col].text = "X"
+                    if self.check_winner_temp('X'):
+                        self.buttons[row][col].text = "O"
+                        self.buttons[row][col].color = (0, 1, 0, 1)
+                        return True
+                    self.buttons[row][col].text = ""
+        return False
+        
+    def set_difficulty(self, difficulty):
+        self.cpu_difficulty = difficulty
+        print(f"Niveau de diff set sur : {self.cpu_difficulty}")
+
+        
+        
     def set_grid_size(self, size):
         # Configurer la taille de la grille et des X/O
         self.grid.clear_widgets()
@@ -182,7 +349,8 @@ class GameScreen(Screen):
             button.color = (0, 0, 1, 1)
             self.status_label.text = "AI's turn"
             if not self.check_winner():
-                self.ai_move()
+                #self.ai_move()
+                self.cpu_move()
                 if not self.check_winner():
                     self.status_label.text = "Your turn"
 
@@ -409,12 +577,13 @@ class MyOXO(App):
         if platform.system() == 'Android':
             Window.fullscreen = 'auto'
             Clock.schedule_once(self.force_fullscreen_refresh, 0.1)
-
+             
         sm = ScreenManager()
         sm.add_widget(MainMenu(name='menu'))
         sm.add_widget(GameScreen(name='game_vs_cpu'))
         sm.add_widget(InstructionsScreen(name='instructions'))
-        sm.add_widget(TwoPlayerGameScreen(name='two_player_game'))
+        sm.add_widget(TwoPlayerGameScreen(name='two_player_game')) 
+                    
         return sm
 
     def force_fullscreen_refresh(self, *args):
