@@ -77,7 +77,7 @@ class MainMenu(Screen):
 
         # Message défilant en bas de l'écran
         self.marquee_text = Label(
-            text=("(c) ByteRoots Studio - 2024 - release 1.0 - cette application est gratuite et dépourvue de publicitée - "
+            text=("(c) ByteRoots Studio - December 2024 - Release 1.0.0 - cette application est gratuite et dépourvue de publicitée - "
                   "Des améliorations suivront au fur et à mesure de mon propre apprentissage :) - belle journée à vous tous ..."),
             font_size='14sp', font_name="8bit", halign='left', size_hint_y=None, height='30sp', color=(0, 1, 0, 1)
         )
