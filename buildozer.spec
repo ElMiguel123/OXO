@@ -48,7 +48,8 @@ requirements = python3,kivy
 
 # (str) Icon of the application
 #icon.filename = %(source.dir)s/data/icon.png
-icon.filename = oxo.png
+icon.filename = byteroots.jpg 
+#oxo.png
 
 # (list) Supported orientations
 # Valid options are: landscape, portrait, portrait-reverse or landscape-reverse
