@@ -23,3 +23,4 @@ Roadmap Future release
 Release 1.0.2
 * Random starting player vs CPU
 * Change layout to display who play,win,draw etc...
+* Harmonize the language in order to have all the app in french
