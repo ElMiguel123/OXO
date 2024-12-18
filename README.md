@@ -5,11 +5,17 @@ Release 1.0.1
 First release published using Google Developer Platform
 All ready to be used.
 
+Release 1.0.2
+* Random starting player vs CPU
+* Change layout to display who play,win,draw etc...
+* Harmonize the language in order to have all the app in french
+* review the scrooling
+
 Several improvement to fix
 * Language (FR/EN/SP) to add
 * Random starting player vs CPU
 * Random starting player vs another player
-* Change layout to display who play,win,draw etc...
+* Change layout to display who play,win,draw etc... for two players game
 * Add better rule for the classic game and Order-Chaos (both 3x3 or 6x6)
 * Improve AI on 6x6 (he is stupid)
 * Add instructions for Order & Chaos
@@ -20,6 +26,7 @@ Several improvement to fix
 * Add in the app the log release
 
 Roadmap Future release
-Release 1.0.2
-* Random starting player vs CPU
-* Change layout to display who play,win,draw etc...
+Release 1.0.3
+* add multi-language switch
+* improve the splashscreen in order to be more smoothy
+* Change layout to display who play,win,draw etc... for two players game

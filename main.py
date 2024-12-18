@@ -1,4 +1,3 @@
-
 from kivy.app import App
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.uix.boxlayout import BoxLayout
@@ -10,13 +9,99 @@ from kivy.core.window import Window
 from kivy.core.text import LabelBase
 from kivy.clock import Clock
 from kivy.graphics import Color, Line, Rectangle
+from kivy.animation import Animation
 import platform
 import random
+import time
 
 # Enregistrement d'une police rétro pour le style du jeu
 LabelBase.register(name="8bit", fn_regular="8bit.ttf")
 
 class MainMenu(Screen):
+    
+    def my__init__(self, **kwargs):
+        super(MainMenu, self).__init__(**kwargs)
+        
+        self.difficulty_levels = ["Facile", "Moyenne", "Difficile", "Impossible"]
+        self.current_difficulty_index = 0
+        self.current_difficulty = self.difficulty_levels[self.current_difficulty_index]
+
+        # Configuration de la couleur de fond du menu principal
+        with self.canvas.before:
+            Color(0.1, 0.1, 0.1, 1)
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.bind(size=self.update_rect, pos=self.update_rect)
+
+        layout = BoxLayout(orientation='vertical', spacing=10, padding=20)
+
+        # Taille de police dynamique pour le titre en fonction de la taille de l'écran
+        self.title_font_size = min(Window.width, Window.height) * 0.1
+
+        # Titre du jeu en gras
+        title = Label(text='[b]OXO[/b]', markup=True, font_size=self.title_font_size, halign='center', color=(1, 1, 0, 1))
+        layout.add_widget(title)
+
+        # Boutons pour le menu principal
+        self.vs_cpu_button = Button(text="contre le CPU 3x3", size_hint=(1, 0.2), background_color=(0.3, 0.3, 0.9, 1), color=(1, 1, 1, 1))
+        self.vs_cpu_button.bind(on_release=self.start_game_vs_cpu)
+        layout.add_widget(self.vs_cpu_button)
+
+        two_players_button = Button(text="Deux joueurs", size_hint=(1, 0.2), background_color=(0.3, 0.3, 0.9, 1), color=(1, 1, 1, 1))
+        two_players_button.bind(on_release=self.start_two_player_game)
+        layout.add_widget(two_players_button)
+
+        self.ordre_chaos_button = Button(text="Ordre et Chaos : [b]3x3[/b]", markup=True, size_hint=(1, 0.2),
+                                         background_color=(0.3, 0.3, 0.9, 1), color=(1, 1, 1, 1))
+        self.ordre_chaos_button.bind(on_release=self.toggle_ordre_chaos)
+        layout.add_widget(self.ordre_chaos_button)
+
+        self.difficulty_button = Button(
+            text="Difficulté : [b]Facile[/b]",
+            markup=True,
+            size_hint=(1, 0.2),
+            background_color=(1, 0.5, 0, 1)
+        )
+        self.difficulty_button.bind(on_release=self.change_difficulty)
+        layout.add_widget(self.difficulty_button)
+
+        instructions_button = Button(text="Instructions", size_hint=(1, 0.2), background_color=(0.3, 0.3, 0.9, 1), color=(1, 1, 1, 1))
+        instructions_button.bind(on_release=self.show_instructions)
+        layout.add_widget(instructions_button)
+
+        quit_button = Button(text="Quitter", size_hint=(1, 0.2), background_color=(0.9, 0.3, 0.3, 1), color=(1, 1, 1, 1))
+        quit_button.bind(on_release=self.quit_app)
+        layout.add_widget(quit_button)
+
+        # ======= Texte défilant corrigé =======
+        self.marquee_container = BoxLayout(size_hint_y=None, height='30sp')
+        self.marquee_text = Label(
+            text=(
+                "(c) ByteRoots Studio - Décembre 2024 - Release 1.0.2 - "
+                "Cette application est gratuite et sans publicité. "
+                "Mon double objectif : apprendre la programmation tout en partageant mes créations. "
+                "Des améliorations arriveront au fil de mon apprentissage :) "
+                "Si vous avez des besoins en développement d'applications, contactez-moi ! "
+                "Belle journée à toutes et à tous..."
+            ),
+            font_size='10sp',
+            font_name="8bit",
+            color=(0, 1, 0, 1),
+            size_hint=(None, None),
+            height='30sp'
+        )
+        self.marquee_text.bind(texture_size=self.reset_position)
+        self.marquee_container.add_widget(self.marquee_text)
+        layout.add_widget(self.marquee_container)
+
+        self.add_widget(layout)
+        Clock.schedule_once(self.start_marquee, 0.1)
+
+        # Taille de la matrice par défaut : 3x3
+        self.matrix_size = 3
+
+
+
+    
     def __init__(self, **kwargs):
         super(MainMenu, self).__init__(**kwargs)
         
@@ -40,12 +125,12 @@ class MainMenu(Screen):
         layout.add_widget(title)
 
         # Bouton pour jouer contre le CPU
-        self.vs_cpu_button = Button(text="vs CPU 3x3", size_hint=(1, 0.2), background_color=(0.3, 0.3, 0.9, 1), color=(1, 1, 1, 1))
+        self.vs_cpu_button = Button(text="contre le CPU 3x3", size_hint=(1, 0.2), background_color=(0.3, 0.3, 0.9, 1), color=(1, 1, 1, 1))
         self.vs_cpu_button.bind(on_release=self.start_game_vs_cpu)
         layout.add_widget(self.vs_cpu_button)
 
         # Bouton pour le mode deux joueurs
-        two_players_button = Button(text="Two players", size_hint=(1, 0.2), background_color=(0.3, 0.3, 0.9, 1), color=(1, 1, 1, 1))
+        two_players_button = Button(text="Deux joueurs", size_hint=(1, 0.2), background_color=(0.3, 0.3, 0.9, 1), color=(1, 1, 1, 1))
         two_players_button.bind(on_release=self.start_two_player_game)
         layout.add_widget(two_players_button)
 
@@ -60,7 +145,7 @@ class MainMenu(Screen):
             text="Difficulté : [b]Facile[/b]",
             markup=True,
             size_hint=(1, 0.2),
-            background_color=(1, 0.5, 0, 1)  # Orange color
+            background_color=(1, 0.5, 0, 1) # Orange color
         )
         self.difficulty_button.bind(on_release=self.change_difficulty)
         layout.add_widget(self.difficulty_button)
@@ -75,28 +160,43 @@ class MainMenu(Screen):
         quit_button = Button(text="Quitter", size_hint=(1, 0.2), background_color=(0.9, 0.3, 0.3, 1), color=(1, 1, 1, 1))
         quit_button.bind(on_release=self.quit_app)
         layout.add_widget(quit_button)
-
-        # Message défilant en bas de l'écran
+      
+        # Message défilant en bas de l'écran  
+        self.marquee_container = BoxLayout(size_hint_y=None, height='30sp')     
         self.marquee_text = Label(
-            text=("(c) ByteRoots Studio - December 2024 - Release 1.0.0 - cette application est gratuite et dépourvue de publicitée - "
-                  "Des améliorations suivront au fur et à mesure de mon propre apprentissage :) - belle journée à vous tous ..."),
-            font_size='14sp', font_name="8bit", halign='left', size_hint_y=None, height='30sp', color=(0, 1, 0, 1)
+            text=(
+                "(c) ByteRoots Studio - Décembre 2024 - Release 1.0.2 - "
+                "Cette application est gratuite et sans publicité. "
+                "Mon double objectif : apprendre la programmation tout en partageant mes créations. "
+                "Des améliorations arriveront au fil de mon apprentissage :) "
+                "Si vous avez des besoins en développement d'applications, contactez-moi ! "
+                "Cela pourrait m'intéresser (devis gratuit, et qui sait, peut-être même la solution idéale ^^). "
+                "Belle journée à toutes et à tous..."
+            ),
+            font_size='10sp',
+            font_name="8bit",
+            halign='left',
+            valign='middle',
+            size_hint=(None, None),
+            size=(5000, 30),  # Largeur pour tout le texte défilant
+            color=(0, 1, 0, 1),
+            text_size=(5000, None)  # Important pour l'alignement
         )
-        marquee_container = BoxLayout(size_hint_y=None, height='30sp')
-        with marquee_container.canvas.before:
-            Color(0, 0, 0, 1)
-            self.marquee_bg = Rectangle(size=marquee_container.size, pos=marquee_container.pos)
-        marquee_container.bind(size=self.update_rect, pos=self.update_rect)
         
-        marquee_container.add_widget(self.marquee_text)
-        layout.add_widget(marquee_container)
+        self.marquee_text.bind(texture_size=self.reset_position)
+        self.marquee_container.add_widget(self.marquee_text)
+        layout.add_widget(self.marquee_container)
 
         self.add_widget(layout)
-        self.start_marquee_animation()
+        Clock.schedule_once(self.start_marquee, 0.1)
 
         # Taille de la matrice par défaut : 3x3
         self.matrix_size = 3
-
+        
+    def reset_position(self, *args):
+        """ Ajuster la largeur pour un défilement continu """
+        self.marquee_text.width = self.marquee_text.texture_size[0]
+       
     def change_difficulty(self, instance):
         self.current_difficulty_index = (self.current_difficulty_index + 1) % len(self.difficulty_levels)
         self.current_difficulty = self.difficulty_levels[self.current_difficulty_index]
@@ -110,8 +210,8 @@ class MainMenu(Screen):
     def start_game_vs_cpu(self, instance):
         # Passer à l'écran de jeu vs CPU avec la taille de matrice sélectionnée
         print(f"On met la valeur difficulté à {self.difficulty_levels[self.current_difficulty_index]}")
-        #GameScreen.set_difficulty(GameScreen, self.difficulty_levels[self.current_difficulty_index])
         self.manager.current = 'game_vs_cpu'
+        #self.manager.get_screen('game_vs_cpu').set_environment(self.difficulty_levels[self.current_difficulty_index],self.matrix_size)
         self.manager.get_screen('game_vs_cpu').set_difficulty(self.difficulty_levels[self.current_difficulty_index])
         self.manager.get_screen('game_vs_cpu').set_grid_size(self.matrix_size)
 
@@ -124,7 +224,7 @@ class MainMenu(Screen):
     def toggle_ordre_chaos(self, instance):
         # Alterner entre une matrice 3x3 et 6x6 et mettre à jour les intitulés des boutons
         self.matrix_size = 6 if self.matrix_size == 3 else 3
-        self.vs_cpu_button.text = f"vs CPU {self.matrix_size}x{self.matrix_size}"
+        self.vs_cpu_button.text = f"contre le CPU {self.matrix_size}x{self.matrix_size}"
         self.ordre_chaos_button.text = f"Ordre et Chaos : [b]{self.matrix_size}x{self.matrix_size}[/b]"
 
     def show_instructions(self, instance):
@@ -134,6 +234,17 @@ class MainMenu(Screen):
     def quit_app(self, instance):
         # Quitter l'application
         App.get_running_app().stop()
+        
+    def start_marquee(self, *args):
+        """ Animer le texte pour qu'il défile de droite à gauche """
+        self.marquee_text.x = self.marquee_container.width  # Position initiale hors écran
+        animation = Animation(x=-self.marquee_text.width, duration=40, t='linear')
+        animation.bind(on_complete=self.restart_marquee)
+        animation.start(self.marquee_text)
+
+    def restart_marquee(self, *args):
+        """ Redémarrer l'animation pour une boucle continue """
+        self.start_marquee()
 
     def start_marquee_animation(self):
         # Lancer l'animation pour le message défilant
@@ -144,7 +255,7 @@ class MainMenu(Screen):
         animation = Animation(x=-self.marquee_text.texture_size[0], duration=duration, transition='linear')
         animation.bind(on_complete=lambda *args: self.reset_marquee_position())
         animation.start(self.marquee_text)
-
+        
     def reset_marquee_position(self):
         # Réinitialiser la position du message pour un défilement continu
         self.marquee_text.x = self.width
@@ -169,9 +280,22 @@ class GameScreen(Screen):
         self.status_font_size = min(Window.width, Window.height) * 0.05
         self.grid = GridLayout(cols=3, spacing=5)
         layout.add_widget(self.grid)
+              
+        # Section pour les informations des joueurs
+        self.player_info_layout = BoxLayout(padding=20, spacing=10)  #BoxLayout(size_hint_y=0.15, spacing=10)
+            
+        # Informations du joueur 1
+        self.player1_label = Label(text='', font_size= self.status_font_size, halign='center', valign='middle', color=(1, 0.5, 0, 1))
+        self.player_info_layout.add_widget(self.player1_label)
 
-        self.status_label = Label(text='Your turn', font_size=self.status_font_size, halign='center', color=(1, 0.5, 0, 1))
-        layout.add_widget(self.status_label)
+        # Informations du joueur 2
+        self.player2_label = Label(text='', font_size=self.status_font_size, halign='center', valign='middle', color=(1, 0.5, 0, 1))
+        self.player_info_layout.add_widget(self.player2_label)
+        
+        layout.add_widget(self.player_info_layout)
+        
+        ###self.status_label = Label(text='Your turn', font_size=self.status_font_size, halign='center', color=(1, 0.5, 0, 1))
+        ###layout.add_widget(self.status_label)
 
         control_layout = BoxLayout(size_hint=(1, 0.2), spacing=10)
         self.restart_button = Button(text="Recommencer", on_release=self.reset_game, background_color=(0.9, 0.3, 0.3, 1), color=(1, 1, 1, 1))
@@ -181,12 +305,78 @@ class GameScreen(Screen):
         layout.add_widget(control_layout)
 
         self.add_widget(layout)
+        
+        # Initialisation des variables
+        ###self.difficulty = "Facile"
+        self.buttons = []  # Initialisation propre
+        self.initialise_game()
+        self.set_grid_size(3)
 
+    def initialise_game(self):
+        self.is_cpu = True # Indique si c'est un jeu vs CPU
+        self.player_win = "" # X , O , E pour Egalité
+        self.player1_isCPU = random.choice([True, False])  # Si True alors CPU = Player1
+        if random.choice([True,False]) :
+            self.pl1_symbol="X"
+            self.pl2_symbol="O"
+        else:
+            self.pl1_symbol="O"
+            self.pl2_symbol="X"
+        self.current_player = self.pl1_symbol ### vu que c'est lui qui commence , initiallement "X"
+        print(f"Load initial : {self.player1_isCPU} is {self.pl1_symbol} with current set to {self.current_player}")
+        
+        if self.player1_isCPU:
+            self.cpu_move()
+            print(f"I plaied first with {self.current_player}")
+            if self.current_player == self.pl1_symbol:
+                self.current_player = self.pl2_symbol
+            else:
+                self.current_player= self.pl1_symbol  
+            print(f"Now value is set to  {self.current_player}")
+
+    # Fonction de mise à jour du joueur
+    def update_player_info(self):
+            """
+            Met à jour les informations des joueurs affichées.
+            """              
+            
+            player1_status = f"[b]À vous de jouer[/b]" if self.current_player == self.pl1_symbol else ""
+            player2_status = f"[b]À vous de jouer[/b]" if self.current_player == self.pl2_symbol else ""
+            print(f"Valeur de WIN!!! : {self.player_win}")
+            
+            if self.player_win:
+                if self.player_win == "E":
+                    player1_status = player2_status = f"[b][color=#FFFF00]EGALITE!!![/b]"
+                elif self.current_player == self.pl1_symbol == self.player_win:
+                    player1_status = f"[b][color=#FFFF00]GAGNé!!![/b]"  
+                elif self.current_player == self.pl2_symbol == self.player_win:
+                    player2_status = f"[b][color=#FFFF00]GAGNé!!![/b]"     
+                
+
+            # Définir les textes avec conditions
+            player1_name = "Joueur 1 (CPU)" if self.player1_isCPU else "Joueur 1" # if self.is_cpu else "Player 1"
+            player2_name = "Joueur 2 (CPU)" if not self.player1_isCPU else "Joueur 2" 
+
+            # Mettre à jour les labels
+            self.player1_label.text = (
+                f"{player1_name}\n"
+                f"Symbole : {self.pl1_symbol}\n"
+                f"{player1_status}"
+            )
+            self.player1_label.markup=True
+            self.player1_label.color = (0, 1, 0, 1) if self.current_player == self.pl1_symbol else (1, 1, 1, 1)
+
+            self.player2_label.text = (
+                f"{player2_name}\n"
+                f"Symbole : {self.pl2_symbol}\n"
+                f"{player2_status}"
+            )
+            self.player2_label.markup=True
+            self.player2_label.color = (1, 0, 0, 1) if self.current_player == self.pl2_symbol else (1, 1, 1, 1)
+        
     def cpu_move(self):
         
-        #button.color = (0, 1, 0, 1)
-        
-        print(f"Valeur actuelle {self.cpu_difficulty}")
+        print(f"Valeur actuelle avant CPUMove : {self.cpu_difficulty} et {self.current_player}")
         
         if self.cpu_difficulty == "Facile":
             return self.random_ai()
@@ -197,32 +387,22 @@ class GameScreen(Screen):
         elif self.cpu_difficulty == "Impossible":
             return self.impossible_move()
         
-    
-    # Define the logic for different levels of CPU intelligence
-    
-    def ai_move(self):
-        for row in self.buttons:
-            for button in row:
-                if button.text == '':
-                    button.text = 'O'
-                    button.color = (0, 1, 0, 1)
-                    return
-                
+    # Define the logic for different levels of CPU intelligence              
     def random_ai(self):
         # IA facile : mouvement aléatoire
+        print(f"Mouvement IA facile je met {self.current_player}")
         available_moves = [(row, col) for row in range(len(self.buttons)) for col in range(len(self.buttons)) if self.buttons[row][col].text == ""]
         if available_moves:
             row, col = random.choice(available_moves)
             self.buttons[row][col].color=(0,1,0,1)
-            self.buttons[row][col].text = "O"
-
-
+            self.buttons[row][col].text = self.current_player ### 'O'
+                        
     def medium_move(self):
         """
         IA défensive : bloque les tentatives de victoire de l'utilisateur.
         """
         # Vérifie si l'utilisateur peut gagner, et bloque
-        if self.block_user():
+        if self.block_user(self.current_player):
             return
         # Sinon, joue aléatoirement
         else:
@@ -236,7 +416,7 @@ class GameScreen(Screen):
         if self.make_win():
             return
         # Sinon, bloque l'utilisateur
-        if self.block_user():
+        if self.block_user(self.current_player):
             return
         # Sinon, joue aléatoirement
         else:
@@ -250,12 +430,12 @@ class GameScreen(Screen):
         if self.make_win():
             return
         # Sinon, bloque l'utilisateur
-        if self.block_user():
+        if self.block_user(self.current_player):
             return
         # Si aucun danger ou opportunité, joue le centre (grille 3x3 uniquement)
         center = len(self.buttons) // 2
         if self.buttons[center][center].text == '':
-            self.buttons[center][center].text = 'O'
+            self.buttons[center][center].text = self.current_player ### 'O' 
             self.buttons[center][center].color = (0, 1, 0, 1)
             return
         # Sinon, joue aléatoirement
@@ -270,8 +450,8 @@ class GameScreen(Screen):
         for row in range(len(self.buttons)):
             for col in range(len(self.buttons)):
                 if self.buttons[row][col].text == '':
-                    self.buttons[row][col].text = 'O'
-                    if self.check_winner_temp('O'):
+                    self.buttons[row][col].text = self.current_player ### 'O'
+                    if self.check_winner_temp(self.current_player): ### 'O' 'O'):
                         self.buttons[row][col].color = (0, 1, 0, 1)
                         return True
                     self.buttons[row][col].text = ''
@@ -303,25 +483,28 @@ class GameScreen(Screen):
 
         return False
         
-    def block_user(self):
+    def block_user(self,symbol):
         # Bloquer le joueur si nécessaire (simple implémentation)
+        if symbol=='O':
+            symbol_human='X'
+        else:
+            symbol_human='O'
+        
         for row in range(len(self.buttons)):
             for col in range(len(self.buttons)):
                 if self.buttons[row][col].text == "":
-                    self.buttons[row][col].text = "X"
-                    if self.check_winner_temp('X'):
-                        self.buttons[row][col].text = "O"
+                    self.buttons[row][col].text = symbol_human
+                    if self.check_winner_temp(symbol_human):
+                        self.buttons[row][col].text = symbol
                         self.buttons[row][col].color = (0, 1, 0, 1)
-                        return True
+                        return True                  
                     self.buttons[row][col].text = ""
-        return False
+        return False      
         
     def set_difficulty(self, difficulty):
         self.cpu_difficulty = difficulty
-        print(f"Niveau de diff set sur : {self.cpu_difficulty}")
-
-        
-        
+        print(f"Niveau de diff set sur : {self.cpu_difficulty} avec {self.current_player}")
+    
     def set_grid_size(self, size):
         # Configurer la taille de la grille et des X/O
         self.grid.clear_widgets()
@@ -331,13 +514,24 @@ class GameScreen(Screen):
 
         self.buttons = [[Button(font_size=self.font_size, background_color=(0.3, 0.9, 0.3, 1), color=(0, 0, 0, 1))
                          for _ in range(size)] for _ in range(size)]
-        
+               
+        # Si le player1 est le cpu, c'est lui qui joue en premier              
+        if self.player1_isCPU:
+            self.cpu_move()
+            print(f"I plaied first with {self.current_player}")
+            if self.current_player == self.pl1_symbol:
+                self.current_player = self.pl2_symbol
+            else:
+                self.current_player= self.pl1_symbol  
+            print(f"Now value is set to  {self.current_player}")
+                
         for row in self.buttons:
             for button in row:
                 button.bind(on_release=self.make_move)
                 self.grid.add_widget(button)
 
         self.winning_line = None  # Réinitialiser la ligne gagnante
+        self.update_player_info()
 
     def update_rect(self, *args):
         self.rect.size = self.size
@@ -345,24 +539,24 @@ class GameScreen(Screen):
 
     def make_move(self, button):
         # Effectuer un coup si la case est vide et vérifier le gagnant
+                                        
         if button.text == '' and not self.check_winner():
-            button.text = 'X'
-            button.color = (0, 0, 1, 1)
-            self.status_label.text = "AI's turn"
+            button.text = self.current_player
+            button.color = (0, 0, 1, 1) #if self.current_player == "X" else (0, 1, 0, 1)                                                                                                             
+            self.update_player_info() 
+            
             if not self.check_winner():
-                #self.ai_move()
+                self.current_player = self.pl2_symbol if self.current_player == self.pl1_symbol else self.pl1_symbol     
+                self.update_player_info()
+                print(f"Au tour de CPU avec {self.current_player} *****************")  
+                #Clock.schedule_once(lambda dt: self.cpu_move(), 0.5)
                 self.cpu_move()
                 if not self.check_winner():
-                    self.status_label.text = "Your turn"
-
-    def ai_move(self):
-        for row in self.buttons:
-            for button in row:
-                if button.text == '':
-                    button.text = 'O'
-                    button.color = (0, 1, 0, 1)
-                    return
-
+                    self.current_player = self.pl2_symbol if self.current_player == self.pl1_symbol else self.pl1_symbol   
+                    self.update_player_info()   
+                    
+        self.update_player_info()
+                                              
     def check_winner(self):
         win_condition = 3
         size = len(self.buttons)
@@ -372,22 +566,27 @@ class GameScreen(Screen):
             for col in range(size - win_condition + 1):
                 if self.check_sequence([self.buttons[row][col + i] for i in range(win_condition)]):
                     self.draw_winning_line([(row, col + i) for i in range(win_condition)])
+                    print(f"QUI ? : {self.player_win}")
                     return True
                 if self.check_sequence([self.buttons[col + i][row] for i in range(win_condition)]):
                     self.draw_winning_line([(col + i, row) for i in range(win_condition)])
+                    print(f"QUI ? : {self.player_win}")
                     return True
 
         for row in range(size - win_condition + 1):
             for col in range(size - win_condition + 1):
                 if self.check_sequence([self.buttons[row + i][col + i] for i in range(win_condition)]):
                     self.draw_winning_line([(row + i, col + i) for i in range(win_condition)])
+                    print(f"QUI ? : {self.player_win}")
                     return True
                 if self.check_sequence([self.buttons[row + i][col + win_condition - 1 - i] for i in range(win_condition)]):
                     self.draw_winning_line([(row + i, col + win_condition - 1 - i) for i in range(win_condition)])
+                    print(f"QUI ? : {self.player_win}")
                     return True
 
         if all(button.text != '' for row in self.buttons for button in row):
-            self.status_label.text = "Égalité !"
+            self.player_win="E"
+            print(f"QUI ? : {self.player_win}")
             return True
 
         return False
@@ -395,7 +594,7 @@ class GameScreen(Screen):
     def check_sequence(self, buttons):
         # Vérifier si tous les boutons d'une séquence contiennent le même texte
         if buttons[0].text != '' and all(button.text == buttons[0].text for button in buttons):
-            self.status_label.text = f"{buttons[0].text} a gagné !"
+            self.player_win=f"{buttons[0].text}"
             return True
         return False
 
@@ -419,10 +618,14 @@ class GameScreen(Screen):
             for button in row:
                 button.text = ''
                 button.color = (0, 0, 0, 1)
-        self.status_label.text = 'Your turn'
+        ### self.status_label.text = 'Your turn'
+        
         if self.winning_line:
             self.canvas.remove(self.winning_line)
             self.winning_line = None
+            
+        self.initialise_game()
+        self.update_player_info()
 
     def return_to_menu(self, *args):
         self.manager.current = 'menu'
@@ -491,7 +694,7 @@ class TwoPlayerGameScreen(Screen):
 
         self.buttons = [[Button(font_size=self.font_size, background_color=(0.3, 0.9, 0.3, 1), color=(0, 0, 0, 1))
                          for _ in range(size)] for _ in range(size)]
-        
+                
         for row in self.buttons:
             for button in row:
                 button.bind(on_release=self.make_move)
