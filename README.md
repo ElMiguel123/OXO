@@ -26,7 +26,14 @@ Several improvement to fix
 * Add in the app the log release
 
 Roadmap Future release
+<<<<<<< HEAD
 Release 1.0.3
 * add multi-language switch
 * improve the splashscreen in order to be more smoothy
 * Change layout to display who play,win,draw etc... for two players game
+=======
+Release 1.0.2
+* Random starting player vs CPU
+* Change layout to display who play,win,draw etc...
+* Harmonize the language in order to have all the app in french
+>>>>>>> 4cacd74b52075521965d4405c17f0939664063a3

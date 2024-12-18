@@ -164,6 +164,7 @@ class MainMenu(Screen):
         # Message défilant en bas de l'écran  
         self.marquee_container = BoxLayout(size_hint_y=None, height='30sp')     
         self.marquee_text = Label(
+<<<<<<< HEAD
             text=(
                 "(c) ByteRoots Studio - Décembre 2024 - Release 1.0.2 - "
                 "Cette application est gratuite et sans publicité. "
@@ -181,6 +182,11 @@ class MainMenu(Screen):
             size=(5000, 30),  # Largeur pour tout le texte défilant
             color=(0, 1, 0, 1),
             text_size=(5000, None)  # Important pour l'alignement
+=======
+            text=("(c) ByteRoots Studio - December 2024 - Release 1.0.1 - cette application est gratuite et dépourvue de publicitée - "
+                  "Des améliorations suivront au fur et à mesure de mon propre apprentissage :) - belle journée à vous tous ..."),
+            font_size='14sp', font_name="8bit", halign='left', size_hint_y=None, height='30sp', color=(0, 1, 0, 1)
+>>>>>>> 4cacd74b52075521965d4405c17f0939664063a3
         )
         
         self.marquee_text.bind(texture_size=self.reset_position)
@@ -348,6 +354,7 @@ class GameScreen(Screen):
                 if self.player_win == "E":
                     player1_status = player2_status = f"[b][color=#FFFF00]EGALITE!!![/b]"
                 elif self.current_player == self.pl1_symbol == self.player_win:
+<<<<<<< HEAD
                     player1_status = f"[b][color=#FFFF00]GAGNé!!![/b]"  
                 elif self.current_player == self.pl2_symbol == self.player_win:
                     player2_status = f"[b][color=#FFFF00]GAGNé!!![/b]"     
@@ -356,6 +363,16 @@ class GameScreen(Screen):
             # Définir les textes avec conditions
             player1_name = "Joueur 1 (CPU)" if self.player1_isCPU else "Joueur 1" # if self.is_cpu else "Player 1"
             player2_name = "Joueur 2 (CPU)" if not self.player1_isCPU else "Joueur 2" 
+=======
+                    player1_status = f"[b][color=#FFFF00]YOU WIN!!![/b]"  
+                elif self.current_player == self.pl2_symbol == self.player_win:
+                    player2_status = f"[b][color=#FFFF00]YOU WIN!!![/b]"     
+                
+
+            # Définir les textes avec conditions
+            player1_name = "Player 1 (CPU)" if self.player1_isCPU else "Player1" # if self.is_cpu else "Player 1"
+            player2_name = "Player 2 (CPU)" if not self.player1_isCPU else "Player2" 
+>>>>>>> 4cacd74b52075521965d4405c17f0939664063a3
 
             # Mettre à jour les labels
             self.player1_label.text = (
