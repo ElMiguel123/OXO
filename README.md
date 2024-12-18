@@ -1,15 +1,25 @@
 Release 1.0.0
+First release of the OXO application compatible on Android and Windows Some features are not yet implemented (network, donation) Completely free. Not published
 
-First release of the OXO application compatible on Android and Windows Some features are not yet implemented (network, donation) Completely free
+Release 1.0.1
+First release published using Google Developer Platform
+All ready to be used.
 
-Release 1.0.0 - Detected bug & improvement
+Several improvement to fix
+* Language (FR/EN/SP) to add
+* Random starting player vs CPU
+* Random starting player vs another player
+* Change layout to display who play,win,draw etc...
+* Add better rule for the classic game and Order-Chaos (both 3x3 or 6x6)
+* Improve AI on 6x6 (he is stupid)
+* Add instructions for Order & Chaos
+* Add Competitive game (ie 1st at 10 point, or you have 3sec to play)
+* Add Highscore board
+* Add Wargame mode (cpu vs cpu)
+* Add donation coffee if someone want
+* Add in the app the log release
 
-    1st player is usually the human --> need to put that in aleatory mode
-    Two game type : Classic and Order & Chaos ; all those 2 type of game can be run on 3x3 or 6x6
-    the CPU is stupid in a 6x6
-    No CPU vs CPU mode (as in wargame)
-    Currently win criteria is only One game, need to add counter possibility
-    Need to define highscore in the future
-    Ordre & Chaos : the principle of the game is not setup , need to rework that
-    Don and notification : need to be added
-    Possibility to add score ? with target counting ?
+Roadmap Future release
+Release 1.0.2
+* Random starting player vs CPU
+* Change layout to display who play,win,draw etc...
